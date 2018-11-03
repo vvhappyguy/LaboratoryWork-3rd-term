@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstring>
 #include <fstream>
+#include <string>
 
 #define FName "addbook1231.bin"
 
@@ -92,11 +93,10 @@ class DB
 			}
 		}
 		fstream fileDB(FName);
-		size_t size = 0;
 		fileDB.seekg(0, std::ios::end);
-		size = fileDB.tellg();
+		_size = fileDB.tellg();
 		fileDB.close();
-		if (size % sizeof(Rec) != 0)
+		if (_size % sizeof(Rec) != 0)
 		{
 			throw runtime_error("Bad structure of DB file");
 		}
@@ -116,6 +116,11 @@ class DB
 		return _ifs;
 	}
 
+	size_t getAddrN(size_t n)
+	{
+		return sizeof(Rec) * n;
+	}
+
 	void closeOF()
 	{
 		delete _ofs;
@@ -126,53 +131,65 @@ class DB
 		delete _ifs;
 	}
 
+	const size_t getSize()
+	{
+		return _size;
+	}
+
   private:
 	ofstream* _ofs;
 	ifstream* _ifs;
+	size_t _size;
 	DB(){};
 	DB(const DB &root) = delete;
 	DB &operator=(const DB &) = delete;
 };
 
-void parse_command(const char *command)
+bool add()
 {
-	if (strlen(command) > 0)
+
+}
+
+void parse_command(string command)
+{
+	const char* cmd = command.c_str();
+	if (strlen(cmd) > 0)
 	{
-		if (strcmp(command, "add") == 0)
+		if (strncmp(cmd, "add",3) == 0)
 		{
 			cout << "Add /dev/null\n";
 			return;
 		}
-		if (strcmp(command, "edit") == 0)
+		if (strncmp(cmd, "edit",4) == 0)
 		{
 			cout << "Edit /dev/null\n";
 			return;
 		}
-		if (strcmp(command, "del") == 0)
+		if (strncmp(cmd, "del",3) == 0)
 		{
 			cout << "Del /dev/null\n";
 			return;
 		}
-		if (strcmp(command, "find") == 0)
+		if (strncmp(cmd, "find",4) == 0)
 		{
 			cout << "Find /dev/null\n";
 			return;
 		}
-		if (strcmp(command, "list") == 0)
+		if (strncmp(cmd, "list",4) == 0)
 		{
 			cout << "List /dev/null\n";
 			return;
 		}
-		if (strcmp(command, "count") == 0)
+		if (strncmp(cmd, "count",5) == 0)
 		{
 			cout << "Count /dev/null\n";
 			return;
 		}
-	}
-	cout << "Please read list of commands:" << std::endl
+		cout << "Please read list of commands:" << std::endl
 		 << "\tadd <...> \n\t- for adding new Rec to DB. \n\t\t(example: add Dyakin Ivan Pavlovich 09.09.1999 Moscow @riokin www.github.com/vvhappyguy)\n"
 		 << "\tedit <n> <fieldname> <val> \n\t- for editting <fieldName> field of <n> Rec from db by your value <val> \n\t\t(example: edit 1 Address SergievPosad)\n"
 		 << "\tdel <n> \n\t- for deletting <n> Rec from DB \n\t\t(example: del 2)\n";
+	}	
 	return;
 }
 
@@ -180,12 +197,12 @@ int main()
 {
 	DB::Instance().connect();
 	DB::Instance().getIF();
-
-	char command[50] = "";
+	std::string command;
 	for (;;)
 	{
 		cout << "> ";
 		cin >> command;
+		cout << "Command: " << command << std::endl;
 		parse_command(command);
 	}
 
