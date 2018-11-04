@@ -4,8 +4,10 @@
 #include <cstring>
 #include <fstream>
 #include <string>
+#include <vector>
 
 #define FName "addbook1231.bin"
+#define BYTE char*
 
 using namespace std;
 
@@ -145,20 +147,73 @@ class DB
 	DB &operator=(const DB &) = delete;
 };
 
-bool add()
+int add(const char* cmd)
 {
+	// Steps:
+	// (1) Validate command - code 1
+	// (2) Create tmp_structure
+	// (3) take pointer to endoffile (use fseek + spec.macro or sizeof file in bytes ??)
+	// (4) open _ofs
+	// (5) using (opened) sngltDB append new tmp_structure using ios::binary
+	// (6) close _ofs
+	// return 0  - successful
 
+	// (1)
+	size_t* words_counter = new size_t;
+	(*words_counter) = 0;
+	char* pars_cmd = new char[sizeof(cmd)];
+	sprintf(pars_cmd,"%s",cmd);
+	char* pch = strtok(pars_cmd," ");
+	std::vector<std::string> words;
+	while(pch != NULL)
+	{
+		*words_counter++;
+		// std::cout << pch << std::endl;
+		words.push_back(pch);
+		pch = strtok(NULL," ");
+		if(*words_counter > 8)
+		{
+			std::cout << "[ERR]: Bad command" << std::endl;
+			delete words_counter;
+			return 1; // Bad command
+		}
+	}
+	delete pars_cmd;
+	delete words_counter;
+	
+	Rec* tmp_rec = new Rec;
+	strncpy(tmp_rec->LastName,words[0].c_str(),50);
+	strncpy(tmp_rec->FirstName,words[1].c_str(),50);
+	strncpy(tmp_rec->FatherName,words[2].c_str(),50);
+	strncpy(tmp_rec->HB,words[3].c_str(),10);
+	strncpy(tmp_rec->Address,words[4].c_str(),100);
+	strncpy(tmp_rec->PhoneNumber,words[2].c_str(),20);
+	strncpy(tmp_rec->Note,words[2].c_str(),4096);
+
+	//	DB::Instance().getOF()->write((BYTE*)tmp_rec,sizeof(Rec));
+	ofstream fo(FName,ios::binary);
+	fo.seekp(ios::end);
+	fo.write((BYTE)tmp_rec,sizeof(Rec));
+	fo.close();
+
+
+	return 0;
 }
 
 void parse_command(string command)
 {
 	const char* cmd = command.c_str();
+	std::cout << "command:\t string: " << command << "\tc_str(): " << cmd << std::endl;
 	if (strlen(cmd) > 0)
 	{
+		int result = 0;
 		if (strncmp(cmd, "add",3) == 0)
 		{
 			cout << "Add /dev/null\n";
-			return;
+			result = add(cmd);
+			if(result == 0)
+				return;
+			
 		}
 		if (strncmp(cmd, "edit",4) == 0)
 		{
@@ -198,10 +253,11 @@ int main()
 	DB::Instance().connect();
 	DB::Instance().getIF();
 	std::string command;
+	
 	for (;;)
 	{
 		cout << "> ";
-		cin >> command;
+		std::getline ( std::cin, command );
 		cout << "Command: " << command << std::endl;
 		parse_command(command);
 	}
