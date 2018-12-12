@@ -7,7 +7,7 @@
 #include <vector>
 
 #define FName "addbook.bin"
-#define BYTE char*
+#define BYTE char *
 
 using namespace std;
 
@@ -75,13 +75,13 @@ class DB
 
 	void connect()
 	{
-		
+
 		if (!fstream(FName).good())
 		{
 			cout << "Do you want to create new DB by name: " << FName << " (yes/no)" << std::endl;
 			char *ans = new char[3];
 			cin >> ans;
-			if (strcmp(ans,"yes"))
+			if (strcmp(ans, "yes"))
 			{
 				delete ans;
 				throw runtime_error("Bad filename of DB");
@@ -90,7 +90,7 @@ class DB
 			else
 			{
 				delete ans;
-				ofstream ofs(FName); 
+				ofstream ofs(FName);
 				ofs.close();
 			}
 		}
@@ -104,16 +104,16 @@ class DB
 		}
 	}
 
-	ofstream* getOF()
+	ofstream *getOF()
 	{
-		if(!_ofs)
+		if (!_ofs)
 			_ofs = new ofstream(FName);
 		return _ofs;
 	}
 
-	ifstream* getIF()
+	ifstream *getIF()
 	{
-		if(_ifs)
+		if (_ifs)
 			_ifs = new ifstream(FName);
 		return _ifs;
 	}
@@ -150,15 +150,15 @@ class DB
 	size_t _size;
 
   private:
-	ofstream* _ofs;
-	ifstream* _ifs;
-	
+	ofstream *_ofs;
+	ifstream *_ifs;
+
 	DB(){};
 	DB(const DB &root) = delete;
 	DB &operator=(const DB &) = delete;
 };
 int ic = 0;
-int add(const char* cmd)
+int add(const char *cmd)
 {
 	// Steps:
 	// (1) Validate command - code 1
@@ -171,20 +171,20 @@ int add(const char* cmd)
 
 	// (1)
 	size_t words_counter = 0;
-	char* pars_cmd = new char[strlen(cmd)];
-	sprintf(pars_cmd,"%s",cmd);
-	char* pch = strtok(pars_cmd," ");
+	char *pars_cmd = new char[strlen(cmd)];
+	sprintf(pars_cmd, "%s", cmd);
+	char *pch = strtok(pars_cmd, " ");
 	std::vector<std::string> words;
-	while(pch != NULL)
+	while (pch != NULL)
 	{
-		
+
 		std::cout << "pch = " << pch
-			<<"\twords.size() = " << words.size()
-			<<"\tcounter: " << words_counter << std::endl;
+				  << "\twords.size() = " << words.size()
+				  << "\tcounter: " << words_counter << std::endl;
 		words.push_back(pch);
 		words_counter++;
-		pch = strtok(NULL," ");
-		if(words_counter > 8)
+		pch = strtok(NULL, " ");
+		if (words_counter > 8)
 		{
 			std::cout << "[ERR]: Bad command" << std::endl;
 			delete pars_cmd;
@@ -199,24 +199,88 @@ int add(const char* cmd)
 		std::cout << "[ERR]: Bad command" << std::endl;
 		return 1;
 	}
-		
+
 	std::cout << "Creating new Rec" << std::endl;
-	Rec* tmp_rec = new Rec;
-	strncpy(tmp_rec->LastName,words[1].c_str(),50);
-	strncpy(tmp_rec->FirstName,words[2].c_str(),50);
-	strncpy(tmp_rec->FatherName,words[3].c_str(),50);
-	strncpy(tmp_rec->HB,words[4].c_str(),10);
-	strncpy(tmp_rec->Address,words[5].c_str(),100);
-	strncpy(tmp_rec->PhoneNumber,words[6].c_str(),20);
-	strncpy(tmp_rec->Note,words[7].c_str(),4096);
+	Rec *tmp_rec = new Rec;
+	strncpy(tmp_rec->LastName, words[1].c_str(), 50);
+	strncpy(tmp_rec->FirstName, words[2].c_str(), 50);
+	strncpy(tmp_rec->FatherName, words[3].c_str(), 50);
+	strncpy(tmp_rec->HB, words[4].c_str(), 10);
+	strncpy(tmp_rec->Address, words[5].c_str(), 100);
+	strncpy(tmp_rec->PhoneNumber, words[6].c_str(), 20);
+	strncpy(tmp_rec->Note, words[7].c_str(), 4096);
 
 	//	DB::Instance().getOF()->write((BYTE*)tmp_rec,sizeof(Rec));
-	ofstream fo(FName,ios::binary|std::ios::app);
-	fo.write((BYTE)tmp_rec,sizeof(Rec));
+	ofstream fo(FName, ios::binary | std::ios::app);
+	fo.write((BYTE)tmp_rec, sizeof(Rec));
 	fo.close();
 	ic++;
 	delete tmp_rec;
 	return 0;
+}
+
+int list(const char *cmd)
+{
+	size_t words_counter = 0;
+	char *pars_cmd = new char[strlen(cmd)];
+	sprintf(pars_cmd, "%s", cmd);
+	char *pch = strtok(pars_cmd, " ");
+	std::vector<std::string> words;
+	while (pch != NULL)
+	{
+
+		std::cout << "pch = " << pch
+				  << "\twords.size() = " << words.size()
+				  << "\tcounter: " << words_counter << std::endl;
+		words.push_back(pch);
+		words_counter++;
+		pch = strtok(NULL, " ");
+		if (words_counter > 3)
+		{
+			std::cout << "[ERR]: Bad command" << std::endl;
+			delete pars_cmd;
+			return 1; // Bad command
+		}
+	}
+	std::cout << "DBG1dasd" << std::endl;
+	delete pars_cmd;
+	if (words.size() > 3)
+	{
+		cout << "Words.size() = " << words.size() << "\n";
+		std::cout << "[ERR]: Bad command" << std::endl;
+		return 1;
+	}
+
+	size_t i1, i2; // Two counters for limits
+
+	if (words.size() == 1)
+	{
+		i1 = 0;
+		i2 = DB::Instance().getSize()/sizeof(Rec);
+	}
+	else if (words.size() == 2)
+	{
+		i1 = stoul(words[1]);
+		i2 = DB::Instance().getSize()/sizeof(Rec);
+	}
+	else if (words.size() == 3)
+	{
+		i1 = stoul(words[1]);
+		i2 = stoul(words[2]);
+	}
+	Rec cout_rec;
+	ifstream f2(FName, ios::binary | ios::in);
+	std::cout << i1 << " " << i2 << std::endl;
+	for (size_t i = 1; i < DB::Instance().getSize(); i++)
+	{
+		f2.read((char *)&cout_rec, sizeof(Rec));
+		if ((i >= i1) && (i <= i2))
+			std::cout << "Number [" << i << "]: "
+					  << cout_rec.FirstName << " " << cout_rec.LastName << " "
+					  << cout_rec.FatherName << " " << cout_rec.Address << " "
+					  << cout_rec.HB << " " << cout_rec.PhoneNumber << " "
+					  << cout_rec.Note << std::endl;
+	}
 }
 
 void parse_command(string command)
@@ -225,44 +289,45 @@ void parse_command(string command)
 	if (strlen(command.c_str()) > 0)
 	{
 		int result = 0;
-		if (strncmp(command.c_str(), "add",3) == 0)
+		if (strncmp(command.c_str(), "add", 3) == 0)
 		{
 			cout << "Add /dev/null\n";
 			result = add(command.c_str());
-			if(result == 0)
+			if (result == 0)
 				return;
-			
 		}
-		if (strncmp(command.c_str(), "edit",4) == 0)
+		if (strncmp(command.c_str(), "edit", 4) == 0)
 		{
 			cout << "Edit /dev/null\n";
 			return;
 		}
-		if (strncmp(command.c_str(), "del",3) == 0)
+		if (strncmp(command.c_str(), "del", 3) == 0)
 		{
 			cout << "Del /dev/null\n";
 			return;
 		}
-		if (strncmp(command.c_str(), "find",4) == 0)
+		if (strncmp(command.c_str(), "find", 4) == 0)
 		{
 			cout << "Find /dev/null\n";
 			return;
 		}
-		if (strncmp(command.c_str(), "list",4) == 0)
+		if (strncmp(command.c_str(), "list", 4) == 0)
 		{
 			cout << "List /dev/null\n";
-			return;
+			result = list(command.c_str());
+			if (result == 0)
+				return;
 		}
-		if (strncmp(command.c_str(), "count",5) == 0)
+		if (strncmp(command.c_str(), "count", 5) == 0)
 		{
 			cout << "Count /dev/null\n";
 			return;
 		}
 		cout << "Please read list of commands:" << std::endl
-		 << "\tadd <...> \n\t- for adding new Rec to DB. \n\t\t(example: add Dyakin Ivan Pavlovich 09.09.1999 Moscow @riokin www.github.com/vvhappyguy)\n"
-		 << "\tedit <n> <fieldname> <val> \n\t- for editting <fieldName> field of <n> Rec from db by your value <val> \n\t\t(example: edit 1 Address SergievPosad)\n"
-		 << "\tdel <n> \n\t- for deletting <n> Rec from DB \n\t\t(example: del 2)\n";
-	}	
+			 << "\tadd <...> \n\t- for adding new Rec to DB. \n\t\t(example: add Dyakin Ivan Pavlovich 09.09.1999 Moscow @riokin www.github.com/vvhappyguy)\n"
+			 << "\tedit <n> <fieldname> <val> \n\t- for editting <fieldName> field of <n> Rec from db by your value <val> \n\t\t(example: edit 1 Address SergievPosad)\n"
+			 << "\tdel <n> \n\t- for deletting <n> Rec from DB \n\t\t(example: del 2)\n";
+	}
 	return;
 }
 
@@ -270,39 +335,38 @@ int main()
 {
 	DB::Instance().connect();
 	DB::Instance().getIF();
-	
+
 	std::string command;
-	
+
 	for (;;)
 	{
 		cout << "> ";
-		std::getline ( std::cin, command );
-		if(strcmp(command.c_str(),"q") == 0)
+		std::getline(std::cin, command);
+		if (strcmp(command.c_str(), "q") == 0)
 			break;
 		cout << "Command: " << command << std::endl;
 		parse_command(command);
 		command = "";
-	
 	}
 	// COUT OF FILE FOR TESTING
 	Rec cout_rec;
 	ifstream f2(FName, ios::binary | ios::in);
-	for(size_t i = 0; i < DB::Instance()._size / sizeof(Rec) + ic; i++)
+	for (size_t i = 0; i < DB::Instance()._size / sizeof(Rec) + ic; i++)
 	{
-	f2.read((char*)&cout_rec, sizeof(Rec));
+		f2.read((char *)&cout_rec, sizeof(Rec));
 		cout << cout_rec.LastName << " " << cout_rec.FirstName << " "
-			<< cout_rec.FatherName << " " << cout_rec.HB << " "
-			<< cout_rec.Address << " " << cout_rec.PhoneNumber << " "
-			<< cout_rec.Note << std::endl;
+			 << cout_rec.FatherName << " " << cout_rec.HB << " "
+			 << cout_rec.Address << " " << cout_rec.PhoneNumber << " "
+			 << cout_rec.Note << std::endl;
 	}
-	// for(size_t i = 0; i < DB::Instance().getSize() / sizeof(Rec); i++)
-	// {
-    //     f2.read((char*)&cout_rec, sizeof(Rec));
-	// 	cout << cout_rec->FirstName << " " << cout_rec->LastName << " "
-	// 		<< cout_rec->FatherName << " " << cout_rec->Address << " "
-	// 		<< cout_rec->HB << " " << cout_rec->PhoneNumber << " "
-	// 		<< cout_rec->Note << std::endl;
-	// }
+	for (size_t i = 0; i < DB::Instance().getSize() / sizeof(Rec); i++)
+	{
+		f2.read((char *)&cout_rec, sizeof(Rec));
+		cout << cout_rec.FirstName << " " << cout_rec.LastName << " "
+			 << cout_rec.FatherName << " " << cout_rec.Address << " "
+			 << cout_rec.HB << " " << cout_rec.PhoneNumber << " "
+			 << cout_rec.Note << std::endl;
+	}
 	f2.close();
 	//delete cout_rec;
 	DB::Instance().closeIF();
