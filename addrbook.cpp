@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <unistd.h>
 
 #define FName "addbook.bin"
 #define BYTE char *
@@ -99,7 +100,7 @@ class DB
 		fstream fileDB(FName);
 		fileDB.seekg(0, std::ios::end);
 		_size = fileDB.tellg();
-		
+
 		this->count = _size / sizeof(Rec);
 		fileDB.close();
 		if (_size % sizeof(Rec) != 0)
@@ -161,20 +162,21 @@ class DB
 	DB &operator=(const DB &) = delete;
 };
 
-char* getFieldbyName(std::string field, Rec* rec){
-	if(strcmp(field.c_str(),"FirstName") == 0)
+char *getFieldbyName(std::string field, Rec *rec)
+{
+	if (strcmp(field.c_str(), "FirstName") == 0)
 		return rec->FirstName;
-	else if(strcmp(field.c_str(),"LastName") == 0)
+	else if (strcmp(field.c_str(), "LastName") == 0)
 		return rec->LastName;
-	else if(strcmp(field.c_str(),"FatherName")==0)
+	else if (strcmp(field.c_str(), "FatherName") == 0)
 		return rec->FatherName;
-	else if(strcmp(field.c_str(),"HB")==0)
+	else if (strcmp(field.c_str(), "HB") == 0)
 		return rec->HB;
-	else if(strcmp(field.c_str(),"Note")==0)
+	else if (strcmp(field.c_str(), "Note") == 0)
 		return rec->Note;
-	else if(strcmp(field.c_str(),"Address") == 0)
+	else if (strcmp(field.c_str(), "Address") == 0)
 		return rec->Address;
-	else if(strcmp(field.c_str(),"PhoneNumber") == 0)
+	else if (strcmp(field.c_str(), "PhoneNumber") == 0)
 		return rec->PhoneNumber;
 	else
 		return nullptr;
@@ -224,6 +226,7 @@ int add(const char *cmd)
 
 	//	DB::Instance().getOF()->write((BYTE*)tmp_rec,sizeof(Rec));
 	ofstream fo(FName, ios::binary | std::ios::app);
+	fo.seekp((DB::Instance().count) * sizeof(Rec), std::ifstream::cur);
 	fo.write((BYTE)tmp_rec, sizeof(Rec));
 	fo.close();
 	DB::Instance().count++;
@@ -233,7 +236,7 @@ int add(const char *cmd)
 
 int list(const char *cmd)
 {
-	if(DB::Instance().count == 0)
+	if (DB::Instance().count == 0)
 		return 1;
 	size_t words_counter = 0;
 	char *pars_cmd = new char[strlen(cmd)];
@@ -327,7 +330,7 @@ int edit(const char *cmd)
 	size_t n = stoul(words[1].c_str());
 	Rec *tmp_rec = new Rec();
 	fstream f2(FName, ios::in | ios::out | ios::binary);
-	f2.seekg((n-1)*sizeof(Rec),std::ifstream::cur);
+	f2.seekg((n - 1) * sizeof(Rec), std::ifstream::cur);
 	f2.read((BYTE)tmp_rec, sizeof(Rec));
 
 	// std::cout << "EDIT [" << n << "]: "
@@ -337,14 +340,14 @@ int edit(const char *cmd)
 	// 				  << tmp_rec->Note << std::endl;
 
 	//char* tmp = tmp_rec->field(words[2].c_str());
-	char* tmp = getFieldbyName(words[2],tmp_rec);
+	char *tmp = getFieldbyName(words[2], tmp_rec);
 	//std::cout << "Field: " << tmp << std::endl;
-	sprintf(tmp,"%s",words[3].c_str());			  
-	f2.seekp((n-1)*sizeof(Rec), ios::beg);
+	sprintf(tmp, "%s", words[3].c_str());
+	f2.seekp((n - 1) * sizeof(Rec), ios::beg);
 	f2.write((BYTE)tmp_rec, sizeof(Rec));
 	f2.close();
 	delete tmp_rec;
-	return 0; 
+	return 0;
 }
 
 int del(const char *cmd)
@@ -377,23 +380,24 @@ int del(const char *cmd)
 	Rec *tmp_rec_del = new Rec();
 	Rec *tmp_rec_last = new Rec();
 	fstream f2(FName, ios::in | ios::out | ios::binary);
-	f2.seekg((n-1)*sizeof(Rec),ios::beg);
+	f2.seekg((n - 1) * sizeof(Rec), ios::beg);
 	f2.read((BYTE)tmp_rec_del, sizeof(Rec));
-	f2.seekg((DB::Instance().count-1)*sizeof(Rec),ios::beg);
+	f2.seekg((DB::Instance().count - 1) * sizeof(Rec), ios::beg);
 	f2.read((BYTE)tmp_rec_last, sizeof(Rec));
-	f2.seekp((n-1)*sizeof(Rec), ios::beg);
+	f2.seekp((n - 1) * sizeof(Rec), ios::beg);
 	f2.write((BYTE)tmp_rec_last, sizeof(Rec));
-	f2.seekg((DB::Instance().count-1)*sizeof(Rec),ios::beg);
-	f2.write("\0",1);
+	f2.seekg((DB::Instance().count - 1) * sizeof(Rec), ios::beg);
+	truncate(FName,sizeof(Rec)*(DB::Instance().count-1));
+	DB::Instance().count--;
 	f2.close();
 	delete tmp_rec_del;
 	delete tmp_rec_last;
-	return 0; 
+	return 0;
 }
 
 void parse_command(string command)
 {
-	std::cout << "["<< DB::Instance().count <<"]command:\t string: " << command << std::endl;
+	std::cout << "[" << DB::Instance().count << "]command:\t string: " << command << std::endl;
 	if (strlen(command.c_str()) > 0)
 	{
 		int result = 0;
@@ -406,10 +410,10 @@ void parse_command(string command)
 		}
 		else if (strncmp(command.c_str(), "count", 5) == 0)
 		{
-			cout << "Count: "<< DB::Instance().count<<std::endl;
+			cout << "Count: " << DB::Instance().count << std::endl;
 			return;
 		}
-		else if(DB::Instance().count == 0)
+		else if (DB::Instance().count == 0)
 		{
 			cout << "DB is free" << std::endl;
 			return;
@@ -423,7 +427,7 @@ void parse_command(string command)
 		}
 		else if (strncmp(command.c_str(), "del", 3) == 0)
 		{
-			cout << "Del /dev/null\n";
+			cout << "Del \n";
 			result = del(command.c_str());
 			if (result == 0)
 				return;
@@ -440,12 +444,12 @@ void parse_command(string command)
 			if (result == 0)
 				return;
 		}
-		
+
 		else
 			cout << "Please read list of commands:" << std::endl
-				<< "\tadd <...> \n\t- for adding new Rec to DB. \n\t\t(example: add Dyakin Ivan Pavlovich 09.09.1999 Moscow @riokin www.github.com/vvhappyguy)\n"
-				<< "\tedit <n> <fieldname> <val> \n\t- for editting <fieldName> field of <n> Rec from db by your value <val> \n\t\t(example: edit 1 Address SergievPosad)\n"
-				<< "\tdel <n> \n\t- for deletting <n> Rec from DB \n\t\t(example: del 2)\n";
+				 << "\tadd <...> \n\t- for adding new Rec to DB. \n\t\t(example: add Dyakin Ivan Pavlovich 09.09.1999 Moscow @riokin www.github.com/vvhappyguy)\n"
+				 << "\tedit <n> <fieldname> <val> \n\t- for editting <fieldName> field of <n> Rec from db by your value <val> \n\t\t(example: edit 1 Address SergievPosad)\n"
+				 << "\tdel <n> \n\t- for deletting <n> Rec from DB \n\t\t(example: del 2)\n";
 	}
 	return;
 }
