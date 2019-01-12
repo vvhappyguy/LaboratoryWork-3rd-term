@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cstring>
 #include <fstream>
-#include <string>
+#include <cstring>
 #include <vector>
 #include <unistd.h>
 
@@ -387,7 +387,7 @@ int del(const char *cmd)
 	f2.seekp((n - 1) * sizeof(Rec), ios::beg);
 	f2.write((BYTE)tmp_rec_last, sizeof(Rec));
 	f2.seekg((DB::Instance().count - 1) * sizeof(Rec), ios::beg);
-	truncate(FName,sizeof(Rec)*(DB::Instance().count-1));
+	truncate(FName, sizeof(Rec) * (DB::Instance().count - 1));
 	DB::Instance().count--;
 	f2.close();
 	delete tmp_rec_del;
@@ -454,36 +454,46 @@ void parse_command(string command)
 	return;
 }
 
-int main()
+int main(int args, char *argv[])
 {
 	DB::Instance().connect();
 	DB::Instance().getIF();
 
-	std::string command;
-
-	for (;;)
+	if (args > 1)
 	{
-		cout << "> ";
-		std::getline(std::cin, command);
-		if (strcmp(command.c_str(), "q") == 0)
-			break;
-		cout << "Command: " << command << std::endl;
-		parse_command(command);
-		command = "";
+		//std::cout << "Arguments[" << args << "]: " << argv[0] << std::endl;
+		char ch_command[512];
+		sprintf(ch_command, "%s", argv[1]);
+		for (ushort i = 2; i < args; i++)
+		{
+			//std::cout << argv[i] << std::endl;
+			sprintf(ch_command, "%s %s", ch_command, argv[i]);
+		}
+		std::string command = ch_command;
+		//std::cout << command << std::endl;
+		if (command.find("-it") == std::string::npos)
+		{
+			std::cout << "CLI-mode. Your command = \""<<command<<"\""<<std::endl;
+			parse_command(command);
+			DB::Instance().closeIF();
+			return 0;
+		}
+		else
+		{
+			std::cout << "Welcome to Interactive Mode!!!" << std::endl;
+			std::string command;
+			for (;;)
+			{
+				cout << "> ";
+				std::getline(std::cin, command);
+				if (strcmp(command.c_str(), "q") == 0)
+					break;
+				cout << "Command: " << command << std::endl;
+				parse_command(command);
+				command = "";
+			}
+			DB::Instance().closeIF();
+			return 0;
+		}
 	}
-	// COUT OF FILE FOR TESTING
-	Rec cout_rec;
-	ifstream f2(FName, ios::binary | ios::in);
-	for (size_t i = 1; i <= DB::Instance().count; i++)
-	{
-		f2.read((char *)&cout_rec, sizeof(Rec));
-		cout << cout_rec.LastName << " " << cout_rec.FirstName << " "
-			 << cout_rec.FatherName << " " << cout_rec.HB << " "
-			 << cout_rec.Address << " " << cout_rec.PhoneNumber << " "
-			 << cout_rec.Note << std::endl;
-	}
-	f2.close();
-	//delete cout_rec;
-	DB::Instance().closeIF();
-	return 0;
 }
