@@ -395,6 +395,57 @@ int del(const char *cmd)
 	return 0;
 }
 
+int find(const char *cmd)
+{
+	size_t words_counter = 0;
+	char *pars_cmd = new char[strlen(cmd)];
+	sprintf(pars_cmd, "%s", cmd);
+	char *pch = strtok(pars_cmd, " ");
+	std::vector<std::string> words;
+	while (pch != NULL)
+	{
+
+		std::cout << "pch = " << pch
+				  << "\twords.size() = " << words.size()
+				  << "\tcounter: " << words_counter << std::endl;
+		words.push_back(pch);
+		words_counter++;
+		pch = strtok(NULL, " ");
+		if (words_counter > 3)
+		{
+			std::cout << "[ERR]: Bad command" << std::endl;
+			delete pars_cmd;
+			return 1; // Bad command
+		}
+	}
+	delete pars_cmd;
+	delete pch;
+
+	Rec cout_rec;
+	ushort num = 0;
+	ifstream f2(FName, ios::binary | ios::in);
+	for (size_t i = 1; i <= DB::Instance().count; i++)
+	{
+		f2.read((BYTE)&cout_rec, sizeof(Rec));
+		char *tmp = getFieldbyName(words[1], &cout_rec);
+		std::cout << tmp << " " << words[2].c_str() << std::endl;
+		if (strncmp(tmp, words[2].c_str(), words[2].size()) == 0)
+		{
+			num = i;
+			break;
+		}
+		if (i == DB::Instance().count)
+			num = 0;
+	}
+	f2.close();
+	if (num != 0)
+		std::cout << "Find your field[" << num << "]" << std::endl;
+	else
+		std::cout << "No such field!" << std::endl;
+
+	return 0;
+}
+
 void parse_command(string command)
 {
 	std::cout << "[" << DB::Instance().count << "]command:\t string: " << command << std::endl;
@@ -435,6 +486,7 @@ void parse_command(string command)
 		else if (strncmp(command.c_str(), "find", 4) == 0)
 		{
 			cout << "Find /dev/null\n";
+			result = find(command.c_str());
 			return;
 		}
 		else if (strncmp(command.c_str(), "list", 4) == 0)
@@ -473,7 +525,7 @@ int main(int args, char *argv[])
 		//std::cout << command << std::endl;
 		if (command.find("-it") == std::string::npos)
 		{
-			std::cout << "CLI-mode. Your command = \""<<command<<"\""<<std::endl;
+			std::cout << "CLI-mode. Your command = \"" << command << "\"" << std::endl;
 			parse_command(command);
 			DB::Instance().closeIF();
 			return 0;
