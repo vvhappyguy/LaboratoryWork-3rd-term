@@ -446,12 +446,25 @@ int find(const char *cmd)
 	return 0;
 }
 
+int help()
+{
+	cout << "Help Inforamtion ..." << std::endl;
+	return 0;
+}
+
 void parse_command(string command)
 {
-	std::cout << "[" << DB::Instance().count << "]command:\t string: " << command << std::endl;
+	// std::cout << "[" << DB::Instance().count << "]command:\t string: " << command << std::endl;
 	if (strlen(command.c_str()) > 0)
 	{
 		int result = 0;
+		if(strncmp(command.c_str(),"help",4) == 0)
+		{
+			cout << "Help\n";
+			result = help();
+			if(result == 0)
+				return;
+		}
 		if (strncmp(command.c_str(), "add", 3) == 0)
 		{
 			cout << "Add\n";
@@ -513,16 +526,13 @@ int main(int args, char *argv[])
 
 	if (args > 1)
 	{
-		//std::cout << "Arguments[" << args << "]: " << argv[0] << std::endl;
 		char ch_command[512];
 		sprintf(ch_command, "%s", argv[1]);
 		for (ushort i = 2; i < args; i++)
 		{
-			//std::cout << argv[i] << std::endl;
 			sprintf(ch_command, "%s %s", ch_command, argv[i]);
 		}
 		std::string command = ch_command;
-		//std::cout << command << std::endl;
 		if (command.find("-it") == std::string::npos)
 		{
 			std::cout << "CLI-mode. Your command = \"" << command << "\"" << std::endl;
@@ -532,7 +542,8 @@ int main(int args, char *argv[])
 		}
 		else
 		{
-			std::cout << "Welcome to Interactive Mode!!!" << std::endl;
+			std::cout << "Welcome to Interactive Mode!!!" << std::endl
+					  << "For exit press 'q' or use Unix signals" << std::endl;
 			std::string command;
 			for (;;)
 			{
