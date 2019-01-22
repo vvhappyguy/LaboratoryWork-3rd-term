@@ -1,6 +1,5 @@
 #include <iostream>
-#include <cstddef>
-#include <algorithm>
+#include <cstddef>	
 #include <cstring>
 #include <fstream>
 #include <cstring>
@@ -26,44 +25,6 @@ class Rec
 	char *field(const char *Id);
 };
 #pragma pack(pop)
-
-struct FieldMap
-{
-	char Id[20];
-	size_t offset;
-} fields[] = {
-#define RegField(FIELD)              \
-	{                                \
-#FIELD, offsetof(Rec, FIELD) \
-	}
-	RegField(LastName),
-	RegField(FirstName),
-	RegField(FatherName),
-	RegField(HB),
-	RegField(Address),
-	RegField(PhoneNumber),
-	RegField(Note)
-#if 0	
-		{"LastName", offsetof(Rec, LastName)},
-		{"FirstName", offsetof(Rec, FirstName)},
-		{"FatherName", offsetof(Rec, FatherName)},
-		{"HB", offsetof(Rec, HB)},
-		{"Address", offsetof(Rec, Address)},
-		{"PhoneNumber", offsetof(Rec, PhoneNumber)},
-		{"Note", offsetof(Rec, Note)}
-#endif
-#undef RegField
-};
-
-static const size_t FM_size = sizeof(fields) / sizeof(FieldMap);
-
-char *Rec::field(const char *Id)
-{
-	FieldMap *fm_ptr = std::find_if(fields, fields + FM_size,
-									[Id](const FieldMap &fm) -> bool { return strcmp(Id, fm.Id) == 0; });
-
-	return fm_ptr == fields + FM_size ? NULL : reinterpret_cast<char *>(this) + fm_ptr->offset;
-}
 
 class DB
 {
@@ -191,10 +152,6 @@ int add(const char *cmd)
 	std::vector<std::string> words;
 	while (pch != NULL)
 	{
-
-		std::cout << "pch = " << pch
-				  << "\twords.size() = " << words.size()
-				  << "\tcounter: " << words_counter << std::endl;
 		words.push_back(pch);
 		words_counter++;
 		pch = strtok(NULL, " ");
@@ -223,8 +180,6 @@ int add(const char *cmd)
 	strncpy(tmp_rec->Address, words[5].c_str(), 100);
 	strncpy(tmp_rec->PhoneNumber, words[6].c_str(), 20);
 	strncpy(tmp_rec->Note, words[7].c_str(), 4096);
-
-	//	DB::Instance().getOF()->write((BYTE*)tmp_rec,sizeof(Rec));
 	ofstream fo(FName, ios::binary | std::ios::app);
 	fo.seekp((DB::Instance().count) * sizeof(Rec), std::ifstream::cur);
 	fo.write((BYTE)tmp_rec, sizeof(Rec));
@@ -245,10 +200,6 @@ int list(const char *cmd)
 	std::vector<std::string> words;
 	while (pch != NULL)
 	{
-
-		std::cout << "pch = " << pch
-				  << "\twords.size() = " << words.size()
-				  << "\tcounter: " << words_counter << std::endl;
 		words.push_back(pch);
 		words_counter++;
 		pch = strtok(NULL, " ");
@@ -310,10 +261,6 @@ int edit(const char *cmd)
 	std::vector<std::string> words;
 	while (pch != NULL)
 	{
-
-		std::cout << "pch = " << pch
-				  << "\twords.size() = " << words.size()
-				  << "\tcounter: " << words_counter << std::endl;
 		words.push_back(pch);
 		words_counter++;
 		pch = strtok(NULL, " ");
@@ -333,15 +280,7 @@ int edit(const char *cmd)
 	f2.seekg((n - 1) * sizeof(Rec), std::ifstream::cur);
 	f2.read((BYTE)tmp_rec, sizeof(Rec));
 
-	// std::cout << "EDIT [" << n << "]: "
-	// 				  << tmp_rec->LastName << " " << tmp_rec->FirstName << " "
-	// 				  << tmp_rec->FatherName << " " << tmp_rec->HB << " "
-	// 				  << tmp_rec->Address << " " << tmp_rec->PhoneNumber << " "
-	// 				  << tmp_rec->Note << std::endl;
-
-	//char* tmp = tmp_rec->field(words[2].c_str());
 	char *tmp = getFieldbyName(words[2], tmp_rec);
-	//std::cout << "Field: " << tmp << std::endl;
 	sprintf(tmp, "%s", words[3].c_str());
 	f2.seekp((n - 1) * sizeof(Rec), ios::beg);
 	f2.write((BYTE)tmp_rec, sizeof(Rec));
@@ -359,10 +298,6 @@ int del(const char *cmd)
 	std::vector<std::string> words;
 	while (pch != NULL)
 	{
-
-		std::cout << "pch = " << pch
-				  << "\twords.size() = " << words.size()
-				  << "\tcounter: " << words_counter << std::endl;
 		words.push_back(pch);
 		words_counter++;
 		pch = strtok(NULL, " ");
@@ -448,26 +383,27 @@ int find(const char *cmd)
 
 int help()
 {
-	cout << "Help Inforamtion ..." << std::endl;
+	cout << "Help Inforamtion ..." << std::endl
+		 << "\tadd <...> \n\t- for adding new Rec to DB. \n\t\t(example: add Dyakin Ivan Pavlovich 09.09.1999 Moscow @riokin www.github.com/vvhappyguy)\n"
+		 << "\tedit <n> <fieldname> <val> \n\t- for editting <fieldName> field of <n> Rec from db by your value <val> \n\t\t(example: edit 1 Address SergievPosad)\n"
+		 << "\tdel <n> \n\t- for deletting <n> Rec from DB \n\t\t(example: del 2)\n";
+	;
 	return 0;
 }
 
 void parse_command(string command)
 {
-	// std::cout << "[" << DB::Instance().count << "]command:\t string: " << command << std::endl;
 	if (strlen(command.c_str()) > 0)
 	{
 		int result = 0;
-		if(strncmp(command.c_str(),"help",4) == 0)
+		if (strncmp(command.c_str(), "help", 4) == 0)
 		{
-			cout << "Help\n";
 			result = help();
-			if(result == 0)
+			if (result == 0)
 				return;
 		}
 		if (strncmp(command.c_str(), "add", 3) == 0)
 		{
-			cout << "Add\n";
 			result = add(command.c_str());
 			if (result == 0)
 				return;
@@ -484,37 +420,30 @@ void parse_command(string command)
 		}
 		else if (strncmp(command.c_str(), "edit", 4) == 0)
 		{
-			cout << "Edit\n";
 			result = edit(command.c_str());
 			if (result == 0)
 				return;
 		}
 		else if (strncmp(command.c_str(), "del", 3) == 0)
 		{
-			cout << "Del \n";
 			result = del(command.c_str());
 			if (result == 0)
 				return;
 		}
 		else if (strncmp(command.c_str(), "find", 4) == 0)
 		{
-			cout << "Find /dev/null\n";
 			result = find(command.c_str());
 			return;
 		}
 		else if (strncmp(command.c_str(), "list", 4) == 0)
 		{
-			cout << "List\n";
 			result = list(command.c_str());
 			if (result == 0)
 				return;
 		}
 
 		else
-			cout << "Please read list of commands:" << std::endl
-				 << "\tadd <...> \n\t- for adding new Rec to DB. \n\t\t(example: add Dyakin Ivan Pavlovich 09.09.1999 Moscow @riokin www.github.com/vvhappyguy)\n"
-				 << "\tedit <n> <fieldname> <val> \n\t- for editting <fieldName> field of <n> Rec from db by your value <val> \n\t\t(example: edit 1 Address SergievPosad)\n"
-				 << "\tdel <n> \n\t- for deletting <n> Rec from DB \n\t\t(example: del 2)\n";
+			cout << "Wrong command or result.\nPlease use `help` command or communicate with author." << std::endl;
 	}
 	return;
 }
@@ -559,4 +488,6 @@ int main(int args, char *argv[])
 			return 0;
 		}
 	}
+	help();
+	return 1;
 }
